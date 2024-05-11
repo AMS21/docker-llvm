@@ -1,0 +1,165 @@
+name: edge
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # At 00:00
+  push:
+    branches:
+      - main
+    paths:
+      # Workflow file itself
+      - '.github/workflows/deploy_edge.yml'
+      # Dockerfile
+      - '*.dockerfile'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build_image:
+    name: Build (${{ matrix.project }}-edge) (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        project:
+          - "clang"
+          - "clang-tidy"
+          - "clang-format"
+          - "llvm-bolt"
+
+        arch:
+          - "amd64"
+          - "i386"
+          - "arm64"
+          - "arm"
+
+        exclude:
+          # llvm-bolt cannot be built on i386
+          - project: llvm-bolt
+            arch: i386
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4.1.4
+
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v3.0.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.3.0
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5.5.1
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ams21/${{ matrix.project }}
+            ghcr.io/ams21/${{ matrix.project }}
+          flavor: |
+            latest=false
+            prefix=
+            suffix=
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=raw,value=edge-${{ matrix.arch }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: ./
+          file: ${{ matrix.project }}.dockerfile
+          build-args: "VERSION=main"
+          push: false
+          platforms: "linux/${{ matrix.arch }}"
+          annotations: ${{ steps.meta.outputs.annotations }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=/tmp/image.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: ${{ matrix.project }}-${{ matrix.arch }}
+          path: /tmp/image.tar
+
+  deploy:
+    name: Deploy
+    needs: build_image
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        project:
+          - "clang"
+          - "clang-tidy"
+          - "clang-format"
+          - "llvm-bolt"
+
+    steps:
+      # Download images
+      - name: Download image amd64
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: ${{ matrix.project }}-amd64
+          path: /tmp/images
+
+      - name: Download image i386
+        if: matrix.project != 'llvm-bolt'
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: ${{ matrix.project }}-amd64
+          path: /tmp/images
+
+      - name: Download image arm64
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: ${{ matrix.project }}-amd64
+          path: /tmp/images
+
+      - name: Download image arm
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: ${{ matrix.project }}-amd64
+          path: /tmp/images
+
+      - name: Load images
+        run: |
+          docker load --input /tmp/images/*.tar
+          docker image ls -a
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3.1.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: docker-manifest-action
+        if: matrix.project != 'llvm-bolt'
+        uses: Noelware/docker-manifest-action@0.4.2
+        with:
+          inputs: ams21/${{ matrix.project }}:edge
+          images: ams21/${{ matrix.project }}:edge-linux/amd64,ams21/${{ matrix.project }}:edge-linux/i386,ams21/${{ matrix.project }}:edge-linux/arm64,ams21/${{ matrix.project }}:edge-linux/arm
+          push: true
+
+      - name: docker-manifest-action
+        if: matrix.project == 'llvm-bolt'
+        uses: Noelware/docker-manifest-action@0.4.2
+        with:
+          inputs: ams21/${{ matrix.project }}:edge
+          images: ams21/${{ matrix.project }}:edge-linux/amd64,ams21/${{ matrix.project }}:edge-linux/arm64,ams21/${{ matrix.project }}:edge-linux/arm
+          push: true
