@@ -1,0 +1,24 @@
+From e80d5ad3504dbfd966fbea463c3f1c44400d2241 Mon Sep 17 00:00:00 2001
+From: AMS21 <AMS21.github@gmail.com>
+Date: Sat, 11 May 2024 11:22:00 +0200
+Subject: [PATCH 2/2] Add missing include
+
+---
+ llvm/include/llvm/Support/Signals.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/llvm/include/llvm/Support/Signals.h b/llvm/include/llvm/Support/Signals.h
+index e0a18e72f2a7..c66ea8b33a9a 100644
+--- a/llvm/include/llvm/Support/Signals.h
++++ b/llvm/include/llvm/Support/Signals.h
+@@ -15,6 +15,7 @@
+ #define LLVM_SUPPORT_SIGNALS_H
+ 
+ #include <string>
++#include <cstdint>
+ 
+ namespace llvm {
+ class StringRef;
+-- 
+2.44.0
+

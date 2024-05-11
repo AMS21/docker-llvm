@@ -1,0 +1,25 @@
+From 5267b1f14844ac86b34ef5d94ef60a1072d55e28 Mon Sep 17 00:00:00 2001
+From: AMS21 <AMS21.github@gmail.com>
+Date: Sat, 11 May 2024 10:49:31 +0200
+Subject: [PATCH] Remove usage of lseek64
+
+---
+ llvm/lib/Support/raw_ostream.cpp | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/llvm/lib/Support/raw_ostream.cpp b/llvm/lib/Support/raw_ostream.cpp
+index 69d4fe96bee8..87358cdd3a5a 100644
+--- a/llvm/lib/Support/raw_ostream.cpp
++++ b/llvm/lib/Support/raw_ostream.cpp
+@@ -804,8 +804,6 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
+   flush();
+ #ifdef _WIN32
+   pos = ::_lseeki64(FD, off, SEEK_SET);
+-#elif defined(HAVE_LSEEK64)
+-  pos = ::lseek64(FD, off, SEEK_SET);
+ #else
+   pos = ::lseek(FD, off, SEEK_SET);
+ #endif
+-- 
+2.44.0
+

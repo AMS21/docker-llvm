@@ -1,0 +1,25 @@
+From d39fc938fa368cd0932bd2c1226238242a55591d Mon Sep 17 00:00:00 2001
+From: AMS21 <AMS21.github@gmail.com>
+Date: Sat, 11 May 2024 11:55:47 +0200
+Subject: [PATCH 2/2] Add missing includes
+
+---
+ llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h b/llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h
+index 9e3478e9fd29..efd55339418b 100644
+--- a/llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h
++++ b/llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h
+@@ -4,6 +4,8 @@
+ #include "llvm/Demangle/Compiler.h"
+ #include "llvm/Demangle/StringView.h"
+ #include <array>
++#include <cstdint>
++#include <string>
+ 
+ class OutputStream;
+ 
+-- 
+2.44.0
+
