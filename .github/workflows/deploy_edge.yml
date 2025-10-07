@@ -31,6 +31,7 @@ jobs:
           - "clang-tidy"
           - "clang-format"
           - "llvm-bolt"
+          - "llvm"
 
     steps:
       - name: Check out the repo

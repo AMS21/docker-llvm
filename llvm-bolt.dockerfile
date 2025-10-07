@@ -11,8 +11,8 @@ RUN apk update && apk upgrade --no-cache && \
     if [[ -d "../patches/${VERSION}" ]]; then git apply ../patches/${VERSION}/*.patch; fi && \
     cmake -S llvm -B build -G "Ninja" \
         -DCMAKE_BUILD_TYPE="Release" \
-        -DCMAKE_C_FLAGS="-O3 -w -mtune=native -flto -static-libgcc -static-libstdc++ -pipe" \
-        -DCMAKE_CXX_FLAGS="-O3 -w -mtune=native -flto -static-libgcc -static-libstdc++ -pipe" \
+        -DCMAKE_C_FLAGS="-O3 -w -flto -static-libgcc -static-libstdc++ -pipe" \
+        -DCMAKE_CXX_FLAGS="-O3 -w -flto -static-libgcc -static-libstdc++ -pipe" \
         -DCMAKE_EXE_LINKER_FLAGS="-Wl,--push-state -Wl,-whole-archive -Wl,--pop-state -lpthread -lstdc++ -lm -ldl" \
         -DLLVM_ENABLE_PROJECTS="bolt;clang;lld" \
         -DLLVM_HOST_TRIPLE="$(gcc -dumpmachine)" \
